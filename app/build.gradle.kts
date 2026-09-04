@@ -14,17 +14,45 @@ android {
         applicationId = "dev.jvqtil.cuber"
         minSdk = 26
         targetSdk = 37
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 100
+        versionName = "1.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        create("release") {
+            storeFile = (
+                    providers.gradleProperty("CUBER_KEYSTORE").orNull
+                        ?: System.getenv("CUBER_KEYSTORE")
+                    )?.let { rootProject.file(it) }
+
+            storePassword =
+                providers.gradleProperty("CUBER_KEYSTORE_PASSWORD").orNull
+                    ?: System.getenv("CUBER_KEYSTORE_PASSWORD")
+
+            keyAlias =
+                providers.gradleProperty("CUBER_KEY_ALIAS").orNull
+                    ?: System.getenv("CUBER_KEY_ALIAS")
+
+            keyPassword =
+                providers.gradleProperty("CUBER_KEY_PASSWORD").orNull
+                    ?: System.getenv("CUBER_KEY_PASSWORD")
+        }
+    }
+
+
     buildTypes {
+        debug {
+            applicationIdSuffix = ".debug"
+            versionNameSuffix = "-debug"
+        }
+
         release {
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("release")
+
             optimization {
-                enable = false
+                enable = true
             }
         }
     }
