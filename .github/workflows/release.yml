@@ -1,0 +1,57 @@
+name: Release APK
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Restore signing key
+        env:
+          CUBER_KEYSTORE: ${{ secrets.CUBER_KEYSTORE }}
+        run: |
+          echo "$CUBER_KEYSTORE" | base64 --decode > cuber-release.jks
+
+      - name: Build Release APK
+        env:
+          CUBER_KEYSTORE: ${{ github.workspace }}/cuber-release.jks
+          CUBER_KEYSTORE_PASSWORD: ${{ secrets.CUBER_KEYSTORE_PASSWORD }}
+          CUBER_KEY_ALIAS: ${{ secrets.CUBER_KEY_ALIAS }}
+          CUBER_KEY_PASSWORD: ${{ secrets.CUBER_KEY_PASSWORD }}
+        run: |
+          chmod +x ./gradlew
+          ./gradlew assembleRelease
+
+      - name: Rename APK
+        run: |
+          APK=$(find app/build/outputs/apk/release -name "*.apk" | head -n 1)
+          echo "$APK"
+          mv "$APK" "app/build/outputs/apk/release/cuber-${GITHUB_REF_NAME}.apk"
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" \
+            "app/build/outputs/apk/release/cuber-${GITHUB_REF_NAME}.apk" \
+            --title "${GITHUB_REF_NAME}" \
+            --generate-notes
