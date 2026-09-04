@@ -2,7 +2,7 @@
 <resources>
 
     <style name="Theme.Cuber" parent="android:Theme.Material.NoActionBar">
-        <item name="android:windowBackground">#000000</item>
+        <item name="android:windowBackground">#121212</item>
     </style>
 
 </resources>
