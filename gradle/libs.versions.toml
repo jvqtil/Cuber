@@ -11,6 +11,8 @@ activityCompose = "1.13.0"
 kotlin = "2.2.10"
 ksp = "2.3.10"
 composeBom = "2026.02.01"
+lifecycleViewmodelCompose = "2.9.2"
+navigationCompose = "2.9.4"
 roomCompiler = "2.8.0"
 roomKtx = "2.8.0"
 roomRuntime = "2.8.0"
@@ -18,6 +20,9 @@ roomRuntime = "2.8.0"
 [libraries]
 androidsvg-aar = { module = "com.caverock:androidsvg-aar", version.ref = "androidsvgAar" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+androidx-lifecycle-runtime-compose = { module = "androidx.lifecycle:lifecycle-runtime-compose", version.ref = "lifecycleViewmodelCompose" }
+androidx-lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycleViewmodelCompose" }
+androidx-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
 androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "roomCompiler" }
 androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "roomRuntime" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }

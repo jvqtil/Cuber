@@ -28,15 +28,33 @@ fun CubePreview(
             height = PreviewHeight
         )
     ) {
+        val documentWidth = svg.documentWidth
+        val documentHeight = svg.documentHeight
+
+        if (
+            documentWidth <= 0f ||
+            documentHeight <= 0f
+        ) {
+            return@Canvas
+        }
+
         val scale = minOf(
-            size.width / svg.documentWidth,
-            size.height / svg.documentHeight
+            size.width / documentWidth,
+            size.height / documentHeight
         )
 
         drawIntoCanvas { canvas ->
             canvas.nativeCanvas.save()
-            canvas.nativeCanvas.scale(scale, scale)
-            svg.renderToCanvas(canvas.nativeCanvas)
+
+            canvas.nativeCanvas.scale(
+                scale,
+                scale
+            )
+
+            svg.renderToCanvas(
+                canvas.nativeCanvas
+            )
+
             canvas.nativeCanvas.restore()
         }
     }
