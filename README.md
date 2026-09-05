@@ -46,3 +46,8 @@ Build it with:
 
 Found a bug, have an idea, or want to improve something?
 Issues and pull requests are welcome.
+
+## Thanks to
+
+* [tnoodle-lib](https://github.com/thewca/tnoodle-lib) — Scramble generation library.
+* [CubeTime](https://github.com/CubeLabsNZ/CubeTime) — Heavily inspired by.
