@@ -1,11 +1,13 @@
 package dev.jvqtil.cuber.ui.screens
 
+import android.content.res.Configuration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -25,6 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -44,6 +47,8 @@ fun SolvesScreen(
 ) {
     val solves by viewModel.solves.collectAsStateWithLifecycle()
     val historyState = rememberLazyListState()
+    val isLandscape =
+        LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
 
     val validSolves = remember(solves) {
         solves.filter { it.penalty != PENALTY_DNF }
@@ -69,141 +74,283 @@ fun SolvesScreen(
         )
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .statusBarsPadding()
-    ) {
-        Column(
+    if (isLandscape) {
+        Row(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(
-                    start = 20.dp,
-                    top = 12.dp,
-                    end = 20.dp,
-                    bottom = 8.dp
-                ),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+                .fillMaxSize()
         ) {
-            Text(
-                text = "Solves",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onBackground
-            )
-
-            Text(
-                text = "${solves.size} solves",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            PrimaryStats(
-                best = best,
-                average = average,
-            )
-
-            AverageStats(averages)
-
-            Text(
-                text = "Solve time chart",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            SolveTimeChart(solves = solves)
-
-            Text(
-                text = "History",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onBackground,
-                modifier = Modifier.padding(top = 8.dp)
-            )
-        }
-
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f)
-        ) {
-            LazyColumn(
-                state = historyState,
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(
-                    horizontal = 20.dp,
-                    vertical = 4.dp
-                ),
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
+                    .padding(
+                        start = 20.dp,
+                        top = 12.dp,
+                        end = 10.dp,
+                        bottom = 20.dp
+                    ),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                if (solves.isEmpty()) {
-                    item {
-                        Text(
-                            text = "No solves yet",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(vertical = 24.dp)
-                        )
-                    }
-                } else {
-                    groupSolvesByDay(solves).forEach { group ->
-                        item {
-                            Text(
-                                text = group.title,
-                                style = MaterialTheme.typography.labelLarge,
-                                fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.padding(
-                                    top = 12.dp,
-                                    bottom = 2.dp
-                                )
-                            )
-                        }
+                Text(
+                    text = "Solves",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
 
-                        items(
-                            items = group.solves,
-                            key = SolveEntity::id
-                        ) { solve ->
-                            SolveRow(
-                                solve = solve,
-                                onClick = {
-                                    onOpenSolve(solve.id)
-                                }
-                            )
-                        }
-                    }
-                }
+                Text(
+                    text = "${solves.size} solves",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                PrimaryStats(
+                    best = best,
+                    average = average
+                )
+
+                AverageStats(averages)
+
+                SolveTimeChart(solves = solves)
             }
 
             Box(
                 modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .fillMaxWidth()
-                    .height(12.dp)
-                    .background(
-                        Brush.verticalGradient(
-                            colors = listOf(
-                                MaterialTheme.colorScheme.background,
-                                Color.Transparent
-                            )
+                    .weight(1f)
+                    .fillMaxHeight()
+                    .padding(
+                        start = 10.dp,
+                        end = 20.dp
+                    )
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    Text(
+                        text = "History",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onBackground,
+                        modifier = Modifier.padding(
+                            top = 12.dp,
+                            bottom = 8.dp
                         )
                     )
-            )
+
+                    Box(
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        LazyColumn(
+                            state = historyState,
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = PaddingValues(
+                                vertical = 4.dp
+                            ),
+                            verticalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            if (solves.isEmpty()) {
+                                item {
+                                    Text(
+                                        text = "No solves yet",
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.padding(vertical = 24.dp),
+                                    )
+                                }
+                            } else {
+                                groupSolvesByDay(solves).forEach { group ->
+                                    item {
+                                        Text(
+                                            text = group.title,
+                                            style = MaterialTheme.typography.labelLarge,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            modifier = Modifier.padding(
+                                                top = 12.dp,
+                                                bottom = 2.dp
+                                            )
+                                        )
+                                    }
+
+                                    items(
+                                        items = group.solves,
+                                        key = SolveEntity::id
+                                    ) { solve ->
+                                        SolveRow(
+                                            solve = solve,
+                                            onClick = {
+                                                onOpenSolve(solve.id)
+                                            }
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.TopCenter)
+                                .fillMaxWidth()
+                                .height(12.dp)
+                                .background(
+                                    Brush.verticalGradient(
+                                        colors = listOf(
+                                            MaterialTheme.colorScheme.background,
+                                            Color.Transparent
+                                        )
+                                    )
+                                )
+                        )
+
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.BottomCenter)
+                                .fillMaxWidth()
+                                .height(24.dp)
+                                .background(
+                                    Brush.verticalGradient(
+                                        colors = listOf(
+                                            Color.Transparent,
+                                            MaterialTheme.colorScheme.background
+                                        )
+                                    )
+                                )
+                        )
+                    }
+                }
+            }
+        }
+    } else {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .statusBarsPadding()
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(
+                        start = 20.dp,
+                        top = 12.dp,
+                        end = 20.dp,
+                        bottom = 8.dp
+                    ),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Text(
+                    text = "Solves",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+
+                Text(
+                    text = "${solves.size} solves",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                PrimaryStats(
+                    best = best,
+                    average = average,
+                )
+
+                AverageStats(averages)
+
+                SolveTimeChart(solves = solves)
+
+                Text(
+                    text = "History",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    modifier = Modifier.padding(top = 8.dp)
+                )
+            }
 
             Box(
                 modifier = Modifier
-                    .align(Alignment.BottomCenter)
                     .fillMaxWidth()
-                    .height(24.dp)
-                    .background(
-                        Brush.verticalGradient(
-                            colors = listOf(
-                                Color.Transparent,
-                                MaterialTheme.colorScheme.background
+                    .weight(1f)
+            ) {
+                LazyColumn(
+                    state = historyState,
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(
+                        horizontal = 20.dp,
+                        vertical = 4.dp
+                    ),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    if (solves.isEmpty()) {
+                        item {
+                            Text(
+                                text = "No solves yet",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(vertical = 24.dp)
+                            )
+                        }
+                    } else {
+                        groupSolvesByDay(solves).forEach { group ->
+                            item {
+                                Text(
+                                    text = group.title,
+                                    style = MaterialTheme.typography.labelLarge,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.padding(
+                                        top = 12.dp,
+                                        bottom = 2.dp
+                                    )
+                                )
+                            }
+
+                            items(
+                                items = group.solves,
+                                key = SolveEntity::id
+                            ) { solve ->
+                                SolveRow(
+                                    solve = solve,
+                                    onClick = {
+                                        onOpenSolve(solve.id)
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .fillMaxWidth()
+                        .height(12.dp)
+                        .background(
+                            Brush.verticalGradient(
+                                colors = listOf(
+                                    MaterialTheme.colorScheme.background,
+                                    Color.Transparent
+                                )
                             )
                         )
-                    )
-            )
+                )
+
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .fillMaxWidth()
+                        .height(24.dp)
+                        .background(
+                            Brush.verticalGradient(
+                                colors = listOf(
+                                    Color.Transparent,
+                                    MaterialTheme.colorScheme.background
+                                )
+                            )
+                        )
+                )
+            }
         }
     }
 }

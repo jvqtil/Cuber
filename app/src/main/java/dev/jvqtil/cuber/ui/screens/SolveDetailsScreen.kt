@@ -1,8 +1,11 @@
 package dev.jvqtil.cuber.ui.screens
 
+import android.content.res.Configuration
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -28,8 +31,10 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -57,6 +62,8 @@ fun SolveDetailsScreen(
     }.collectAsStateWithLifecycle()
 
     val currentSolve = solve ?: return
+    val isLandscape =
+        LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
 
     var comment by remember(currentSolve.id) {
         mutableStateOf(currentSolve.comment.orEmpty())
@@ -93,143 +100,280 @@ fun SolveDetailsScreen(
         PENALTY_DNF
     )
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .pointerInput(Unit) {
-                detectVerticalDragGestures(
-                    onDragStart = {
-                        dragDistance = 0f
-                    },
-                    onVerticalDrag = { _, dragAmount ->
-                        if (dragAmount > 0f) {
-                            dragDistance += dragAmount
-                        }
-                    },
-                    onDragEnd = {
-                        if (dragDistance >= SWIPE_THRESHOLD) {
-                            onBack()
-                        }
+    val gestureModifier = Modifier.pointerInput(Unit) {
+        detectVerticalDragGestures(
+            onDragStart = {
+                dragDistance = 0f
+            },
+            onVerticalDrag = { _, dragAmount ->
+                if (dragAmount > 0f) {
+                    dragDistance += dragAmount
+                }
+            },
+            onDragEnd = {
+                if (dragDistance >= SWIPE_THRESHOLD) {
+                    onBack()
+                }
 
-                        dragDistance = 0f
+                dragDistance = 0f
+            },
+            onDragCancel = {
+                dragDistance = 0f
+            }
+        )
+    }
+
+    if (isLandscape) {
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .imePadding()
+                .then(gestureModifier)
+                .padding(
+                    horizontal = 20.dp,
+                    vertical = 12.dp
+                ),
+            horizontalArrangement = Arrangement.spacedBy(20.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight(),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        text = TimeUtils.formatDateTime(currentSolve.createdAt),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    Text(
+                        text = TimeUtils.formatSolveTime(
+                            currentSolve.time,
+                            currentSolve.penalty
+                        ),
+                        style = MaterialTheme.typography.displaySmall,
+                        fontWeight = FontWeight.Bold,
+                        color = when (currentSolve.penalty) {
+                            PENALTY_DNF -> MaterialTheme.colorScheme.error
+                            else -> MaterialTheme.colorScheme.onBackground
+                        }
+                    )
+                }
+
+                SingleChoiceSegmentedButtonRow(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    penalties.forEachIndexed { index, penalty ->
+                        SegmentedButton(
+                            selected = currentSolve.penalty == penalty,
+                            onClick = {
+                                viewModel.setPenalty(
+                                    solve = currentSolve,
+                                    penalty = penalty
+                                )
+                            },
+                            shape = SegmentedButtonDefaults.itemShape(
+                                index = index,
+                                count = penalties.size
+                            ),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text(penalty)
+                        }
+                    }
+                }
+
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = "Comment",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+
+                    OutlinedTextField(
+                        value = comment,
+                        onValueChange = { comment = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = MaterialTheme.shapes.large,
+                        singleLine = true,
+                        placeholder = {
+                            Text(
+                                text = "Add a comment",
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    )
+                }
+
+                HorizontalDivider(
+                    color = MaterialTheme.colorScheme.outlineVariant
+                )
+
+                Button(
+                    onClick = {
+                        viewModel.deleteSolve(currentSolve)
+                        onDeleted()
                     },
-                    onDragCancel = {
-                        dragDistance = 0f
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = MaterialTheme.shapes.large,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer,
+                        contentColor = MaterialTheme.colorScheme.onErrorContainer
+                    )
+                ) {
+                    Text("Delete solve")
+                }
+            }
+
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight(),
+                horizontalAlignment = CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                CubePreview(
+                    scramble = scramble,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(190.dp)
+                )
+
+                Text(
+                    text = currentSolve.scramble,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 12.dp),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    } else {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .then(gestureModifier)
+                .statusBarsPadding()
+                .navigationBarsPadding()
+                .imePadding()
+                .padding(
+                    horizontal = 20.dp,
+                    vertical = 12.dp
+                ),
+            verticalArrangement = Arrangement.spacedBy(18.dp)
+        ) {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = TimeUtils.formatDateTime(currentSolve.createdAt),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                Text(
+                    text = TimeUtils.formatSolveTime(
+                        currentSolve.time,
+                        currentSolve.penalty
+                    ),
+                    style = MaterialTheme.typography.displaySmall,
+                    fontWeight = FontWeight.Bold,
+                    color = when (currentSolve.penalty) {
+                        PENALTY_DNF -> MaterialTheme.colorScheme.error
+                        else -> MaterialTheme.colorScheme.onBackground
                     }
                 )
             }
-            .statusBarsPadding()
-            .navigationBarsPadding()
-            .imePadding()
-            .padding(
-                horizontal = 20.dp,
-                vertical = 12.dp
-            ),
-        verticalArrangement = Arrangement.spacedBy(18.dp)
-    ) {
-        Column(
-            verticalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
+
+            SingleChoiceSegmentedButtonRow(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                penalties.forEachIndexed { index, penalty ->
+                    SegmentedButton(
+                        selected = currentSolve.penalty == penalty,
+                        onClick = {
+                            viewModel.setPenalty(
+                                solve = currentSolve,
+                                penalty = penalty
+                            )
+                        },
+                        shape = SegmentedButtonDefaults.itemShape(
+                            index = index,
+                            count = penalties.size
+                        ),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(penalty)
+                    }
+                }
+            }
+
+            CubePreview(
+                scramble = scramble,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(240.dp)
+            )
+
             Text(
-                text = TimeUtils.formatDateTime(currentSolve.createdAt),
-                style = MaterialTheme.typography.bodyMedium,
+                text = currentSolve.scramble,
+                modifier = Modifier.fillMaxWidth(),
+                style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
-            Text(
-                text = TimeUtils.formatSolveTime(
-                    currentSolve.time,
-                    currentSolve.penalty
-                ),
-                style = MaterialTheme.typography.displaySmall,
-                fontWeight = FontWeight.Bold,
-                color = when (currentSolve.penalty) {
-                    PENALTY_DNF -> MaterialTheme.colorScheme.error
-                    else -> MaterialTheme.colorScheme.onBackground
-                }
-            )
-        }
+            Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    text = "Comment",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
 
-        SingleChoiceSegmentedButtonRow(
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            penalties.forEachIndexed { index, penalty ->
-                SegmentedButton(
-                    selected = currentSolve.penalty == penalty,
-                    onClick = {
-                        viewModel.setPenalty(
-                            solve = currentSolve,
-                            penalty = penalty
+                OutlinedTextField(
+                    value = comment,
+                    onValueChange = { comment = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = MaterialTheme.shapes.large,
+                    singleLine = true,
+                    placeholder = {
+                        Text(
+                            text = "Add a comment",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
-                    },
-                    shape = SegmentedButtonDefaults.itemShape(
-                        index = index,
-                        count = penalties.size
-                    ),
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Text(penalty)
-                }
+                    }
+                )
             }
-        }
 
-        CubePreview(
-            scramble = scramble,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(240.dp)
-        )
-
-        Text(
-            text = currentSolve.scramble,
-            modifier = Modifier.fillMaxWidth(),
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-
-        Column(
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Text(
-                text = "Comment",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onBackground
+            HorizontalDivider(
+                color = MaterialTheme.colorScheme.outlineVariant
             )
 
-            OutlinedTextField(
-                value = comment,
-                onValueChange = { comment = it },
+            Button(
+                onClick = {
+                    viewModel.deleteSolve(currentSolve)
+                    onDeleted()
+                },
                 modifier = Modifier.fillMaxWidth(),
                 shape = MaterialTheme.shapes.large,
-                singleLine = true,
-                placeholder = {
-                    Text(
-                        text = "Add a comment",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            )
-        }
-
-        HorizontalDivider(
-            color = MaterialTheme.colorScheme.outlineVariant
-        )
-
-        Button(
-            onClick = {
-                viewModel.deleteSolve(currentSolve)
-                onDeleted()
-            },
-            modifier = Modifier.fillMaxWidth(),
-            shape = MaterialTheme.shapes.large,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.errorContainer,
-                contentColor = MaterialTheme.colorScheme.onErrorContainer
-            )
-        ) {
-            Text("Delete solve")
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.errorContainer,
+                    contentColor = MaterialTheme.colorScheme.onErrorContainer
+                )
+            ) {
+                Text("Delete solve")
+            }
         }
     }
 }

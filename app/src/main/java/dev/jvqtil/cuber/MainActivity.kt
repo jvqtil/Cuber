@@ -1,8 +1,12 @@
 package dev.jvqtil.cuber
 
+import android.content.res.Configuration
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -16,6 +20,9 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        enableEdgeToEdge()
+        updateSystemBars()
+
         val database = CuberDatabase.getInstance(this)
         val repository = SolveRepository(database.solveDao())
 
@@ -26,6 +33,25 @@ class MainActivity : ComponentActivity() {
                 )
 
                 CuberNavHost(viewModel)
+            }
+        }
+    }
+
+    private fun updateSystemBars() {
+        val controller = WindowCompat.getInsetsController(
+            window,
+            window.decorView
+        )
+
+        when (resources.configuration.orientation) {
+            Configuration.ORIENTATION_LANDSCAPE -> {
+                controller.hide(
+                    WindowInsetsCompat.Type.systemBars()
+                )
+            }
+
+            else -> {
+                controller.show(WindowInsetsCompat.Type.systemBars())
             }
         }
     }
