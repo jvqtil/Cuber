@@ -133,7 +133,10 @@ fun CuberNavHost(
             ) {
                 SolveDetailsScreen(
                     solveId = solveId,
-                    viewModel = viewModel
+                    viewModel = viewModel,
+                    onDeleted = {
+                        navController.popBackStack()
+                    }
                 )
             }
         }

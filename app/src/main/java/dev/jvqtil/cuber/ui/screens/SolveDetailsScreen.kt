@@ -40,7 +40,8 @@ import kotlin.time.Duration.Companion.milliseconds
 @Composable
 fun SolveDetailsScreen(
     solveId: Long,
-    viewModel: CuberViewModel
+    viewModel: CuberViewModel,
+    onDeleted: () -> Unit
 ) {
     val solve by remember(solveId) {
         viewModel.observeSolve(solveId)
@@ -182,6 +183,7 @@ fun SolveDetailsScreen(
         Button(
             onClick = {
                 viewModel.deleteSolve(currentSolve)
+                onDeleted()
             },
             modifier = Modifier.fillMaxWidth(),
             shape = MaterialTheme.shapes.large,
