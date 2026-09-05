@@ -7,11 +7,26 @@
 
 Cubing app for Android. Timer, scrambles, stats
 
-[**Features**](#features) · [**Contributing**](#contributing)
+[**Usage**](#usage)
+&nbsp;•&nbsp;
+[**Features**](#features)
+&nbsp;•&nbsp;
+[**Contributing**](#contributing)
 
 <a href="https://github.com/jvqtil/Cuber/releases/latest">
   <img src="https://img.shields.io/badge/Download%20APK-8B5CF6?style=for-the-badge&logo=android&logoColor=white" alt="Download APK">
 </a>
+
+<br>
+<br>
+
+<table>
+  <tr>
+    <td><img src="assets/screenshots/cuber_timer_screen.png" width="200" alt="Timer"></td>
+    <td><img src="assets/screenshots/cuber_stats_n_history_screen.png" width="200" alt="Statistics and solve history"></td>
+    <td><img src="assets/screenshots/cuber_solve_details_screen.png" width="200" alt="Solve details"></td>
+  </tr>
+</table>
 
 </div>
 
