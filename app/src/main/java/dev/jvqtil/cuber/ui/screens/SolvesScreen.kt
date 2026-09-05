@@ -20,6 +20,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -28,6 +29,7 @@ import dev.jvqtil.cuber.database.PENALTY_DNF
 import dev.jvqtil.cuber.database.PENALTY_PLUS_TWO
 import dev.jvqtil.cuber.database.SolveEntity
 import dev.jvqtil.cuber.ui.components.SolveRow
+import dev.jvqtil.cuber.ui.components.SolveTimeChart
 import dev.jvqtil.cuber.util.TimeUtils
 import java.util.Calendar
 
@@ -44,7 +46,6 @@ fun SolvesScreen(
     }
 
     val best = validSolves.minOfOrNull(::effectiveTime)
-    val worst = validSolves.maxOfOrNull(::effectiveTime)
 
     val average = remember(validSolves) {
         validSolves
@@ -60,8 +61,7 @@ fun SolvesScreen(
             "Ao12" to calculateAo(solves, 12),
             "Ao25" to calculateAo(solves, 25),
             "Ao50" to calculateAo(solves, 50),
-            "Ao100" to calculateAo(solves, 100),
-            "Ao1000" to calculateAo(solves, 1000)
+            "Ao100" to calculateAo(solves, 100)
         )
     }
 
@@ -97,10 +97,17 @@ fun SolvesScreen(
             PrimaryStats(
                 best = best,
                 average = average,
-                worst = worst
             )
 
             AverageStats(averages)
+
+            Text(
+                text = "Solve time chart",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            SolveTimeChart(solves = solves)
 
             Text(
                 text = "History",
@@ -168,7 +175,6 @@ fun SolvesScreen(
 private fun PrimaryStats(
     best: Long?,
     average: Long?,
-    worst: Long?
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -177,18 +183,15 @@ private fun PrimaryStats(
         StatCard(
             title = "Best",
             value = TimeUtils.formatNullable(best),
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f),
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
+            titleColor = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.75f),
+            valueColor = MaterialTheme.colorScheme.onPrimaryContainer
         )
 
         StatCard(
             title = "Average",
             value = TimeUtils.formatNullable(average),
-            modifier = Modifier.weight(1f)
-        )
-
-        StatCard(
-            title = "Worst",
-            value = TimeUtils.formatNullable(worst),
             modifier = Modifier.weight(1f)
         )
     }
@@ -198,33 +201,16 @@ private fun PrimaryStats(
 private fun AverageStats(
     averages: List<Pair<String, Long?>>
 ) {
-    Column(
-        verticalArrangement = Arrangement.spacedBy(10.dp)
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(6.dp)
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            averages.take(3).forEach { (title, value) ->
-                StatCard(
-                    title = title,
-                    value = TimeUtils.formatNullable(value),
-                    modifier = Modifier.weight(1f)
-                )
-            }
-        }
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            averages.drop(3).forEach { (title, value) ->
-                StatCard(
-                    title = title,
-                    value = TimeUtils.formatNullable(value),
-                    modifier = Modifier.weight(1f)
-                )
-            }
+        averages.forEach { (title, value) ->
+            StatCard(
+                title = title,
+                value = TimeUtils.formatNullable(value),
+                modifier = Modifier.weight(1f)
+            )
         }
     }
 }
@@ -233,20 +219,23 @@ private fun AverageStats(
 private fun StatCard(
     title: String,
     value: String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    containerColor: Color = MaterialTheme.colorScheme.surfaceContainer,
+    titleColor: Color = MaterialTheme.colorScheme.onSurfaceVariant,
+    valueColor: Color = MaterialTheme.colorScheme.onSurface
 ) {
     Card(
         modifier = modifier,
         shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer
+            containerColor = containerColor
         )
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(
-                    horizontal = 14.dp,
+                    horizontal = 12.dp,
                     vertical = 15.dp
                 ),
             verticalArrangement = Arrangement.spacedBy(5.dp)
@@ -254,14 +243,14 @@ private fun StatCard(
             Text(
                 text = title,
                 style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = titleColor
             )
 
             Text(
                 text = value,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface
+                color = valueColor
             )
         }
     }
