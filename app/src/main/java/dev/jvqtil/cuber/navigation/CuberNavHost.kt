@@ -126,19 +126,16 @@ fun CuberNavHost(
         ) { entry ->
             val solveId = entry.arguments?.getLong(SOLVE_ID) ?: return@composable
 
-            SwipeBackScreen(
+            SolveDetailsScreen(
+                solveId = solveId,
+                viewModel = viewModel,
                 onBack = {
                     navController.popBackStack()
+                },
+                onDeleted = {
+                    navController.popBackStack()
                 }
-            ) {
-                SolveDetailsScreen(
-                    solveId = solveId,
-                    viewModel = viewModel,
-                    onDeleted = {
-                        navController.popBackStack()
-                    }
-                )
-            }
+            )
         }
     }
 }

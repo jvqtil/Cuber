@@ -1,5 +1,6 @@
 package dev.jvqtil.cuber.ui.screens
 
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -23,10 +24,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -40,10 +43,13 @@ import dev.jvqtil.cuber.util.TimeUtils
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.milliseconds
 
+private const val SWIPE_THRESHOLD = 120f
+
 @Composable
 fun SolveDetailsScreen(
     solveId: Long,
     viewModel: CuberViewModel,
+    onBack: () -> Unit,
     onDeleted: () -> Unit
 ) {
     val solve by remember(solveId) {
@@ -54,6 +60,10 @@ fun SolveDetailsScreen(
 
     var comment by remember(currentSolve.id) {
         mutableStateOf(currentSolve.comment.orEmpty())
+    }
+
+    var dragDistance by remember {
+        mutableFloatStateOf(0f)
     }
 
     LaunchedEffect(currentSolve.id) {
@@ -87,6 +97,28 @@ fun SolveDetailsScreen(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
+            .pointerInput(Unit) {
+                detectVerticalDragGestures(
+                    onDragStart = {
+                        dragDistance = 0f
+                    },
+                    onVerticalDrag = { _, dragAmount ->
+                        if (dragAmount > 0f) {
+                            dragDistance += dragAmount
+                        }
+                    },
+                    onDragEnd = {
+                        if (dragDistance >= SWIPE_THRESHOLD) {
+                            onBack()
+                        }
+
+                        dragDistance = 0f
+                    },
+                    onDragCancel = {
+                        dragDistance = 0f
+                    }
+                )
+            }
             .statusBarsPadding()
             .navigationBarsPadding()
             .imePadding()
