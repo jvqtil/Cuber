@@ -1,12 +1,14 @@
 package dev.jvqtil.cuber.ui.screens
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -19,7 +21,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -118,55 +122,88 @@ fun SolvesScreen(
             )
         }
 
-        LazyColumn(
-            state = historyState,
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
-                .navigationBarsPadding(),
-            contentPadding = PaddingValues(
-                horizontal = 20.dp,
-                vertical = 4.dp
-            ),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            if (solves.isEmpty()) {
-                item {
-                    Text(
-                        text = "No solves yet",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(vertical = 24.dp)
-                    )
-                }
-            } else {
-                groupSolvesByDay(solves).forEach { group ->
+            LazyColumn(
+                state = historyState,
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(
+                    horizontal = 20.dp,
+                    vertical = 4.dp
+                ),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                if (solves.isEmpty()) {
                     item {
                         Text(
-                            text = group.title,
-                            style = MaterialTheme.typography.labelLarge,
-                            fontWeight = FontWeight.SemiBold,
+                            text = "No solves yet",
+                            style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(
-                                top = 12.dp,
-                                bottom = 2.dp
-                            )
+                            modifier = Modifier.padding(vertical = 24.dp)
                         )
                     }
+                } else {
+                    groupSolvesByDay(solves).forEach { group ->
+                        item {
+                            Text(
+                                text = group.title,
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(
+                                    top = 12.dp,
+                                    bottom = 2.dp
+                                )
+                            )
+                        }
 
-                    items(
-                        items = group.solves,
-                        key = SolveEntity::id
-                    ) { solve ->
-                        SolveRow(
-                            solve = solve,
-                            onClick = {
-                                onOpenSolve(solve.id)
-                            }
-                        )
+                        items(
+                            items = group.solves,
+                            key = SolveEntity::id
+                        ) { solve ->
+                            SolveRow(
+                                solve = solve,
+                                onClick = {
+                                    onOpenSolve(solve.id)
+                                }
+                            )
+                        }
                     }
                 }
             }
+
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .fillMaxWidth()
+                    .height(12.dp)
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(
+                                MaterialTheme.colorScheme.background,
+                                Color.Transparent
+                            )
+                        )
+                    )
+            )
+
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .height(24.dp)
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(
+                                Color.Transparent,
+                                MaterialTheme.colorScheme.background
+                            )
+                        )
+                    )
+            )
         }
     }
 }
