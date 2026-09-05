@@ -37,14 +37,15 @@ Swipe **up** to view your statistics and solve history. Swipe **down** to return
 
 ## Features
 
-- Fast and simple speedcubing timer
-- WCA-style 3×3 scrambles
-- Visual scramble preview
+- Fast and simple **speedcubing** timer
+- WCA-style **3×3 scrambles**
+- **Visual scramble preview**
 - Solves history
-- Statistics
-- `+2` and `DNF` penalties
+- **Statistics**
+- **`+2`** and **`DNF`** penalties
 - Comments for individual solves
 - Local-only storage
+- Incredible **landspace** UI
 - Material UI
 - Dynamic colors on Android 12+
 - Predictive back gesture support (Android 16+)
