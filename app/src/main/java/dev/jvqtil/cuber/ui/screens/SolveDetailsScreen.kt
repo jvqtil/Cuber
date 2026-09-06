@@ -1,6 +1,12 @@
 package dev.jvqtil.cuber.ui.screens
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import android.content.res.Configuration
+import android.widget.Toast
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -17,6 +23,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -35,8 +43,11 @@ import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.jvqtil.cuber.CuberViewModel
 import dev.jvqtil.cuber.database.PENALTY_DNF
@@ -62,8 +73,12 @@ fun SolveDetailsScreen(
     }.collectAsStateWithLifecycle()
 
     val currentSolve = solve ?: return
+
     val isLandscape =
-        LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
+        LocalConfiguration.current.orientation ==
+            Configuration.ORIENTATION_LANDSCAPE
+
+    val context = LocalContext.current
 
     var comment by remember(currentSolve.id) {
         mutableStateOf(currentSolve.comment.orEmpty())
@@ -99,6 +114,25 @@ fun SolveDetailsScreen(
         PENALTY_PLUS_TWO,
         PENALTY_DNF
     )
+
+    fun copyScramble() {
+        val clipboard = context.getSystemService(
+            Context.CLIPBOARD_SERVICE
+        ) as ClipboardManager
+
+        clipboard.setPrimaryClip(
+            ClipData.newPlainText(
+                "Scramble",
+                currentSolve.scramble
+            )
+        )
+
+        Toast.makeText(
+            context,
+            "Scramble copied",
+            Toast.LENGTH_SHORT
+        ).show()
+    }
 
     val gestureModifier = Modifier.pointerInput(Unit) {
         detectVerticalDragGestures(
@@ -145,7 +179,9 @@ fun SolveDetailsScreen(
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     Text(
-                        text = TimeUtils.formatDateTime(currentSolve.createdAt),
+                        text = TimeUtils.formatDateTime(
+                            currentSolve.createdAt
+                        ),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -158,8 +194,11 @@ fun SolveDetailsScreen(
                         style = MaterialTheme.typography.displaySmall,
                         fontWeight = FontWeight.Bold,
                         color = when (currentSolve.penalty) {
-                            PENALTY_DNF -> MaterialTheme.colorScheme.error
-                            else -> MaterialTheme.colorScheme.onBackground
+                            PENALTY_DNF ->
+                                MaterialTheme.colorScheme.error
+
+                            else ->
+                                MaterialTheme.colorScheme.onBackground
                         }
                     )
                 }
@@ -199,7 +238,9 @@ fun SolveDetailsScreen(
 
                     OutlinedTextField(
                         value = comment,
-                        onValueChange = { comment = it },
+                        onValueChange = {
+                            comment = it
+                        },
                         modifier = Modifier.fillMaxWidth(),
                         shape = MaterialTheme.shapes.large,
                         singleLine = true,
@@ -224,8 +265,10 @@ fun SolveDetailsScreen(
                     modifier = Modifier.fillMaxWidth(),
                     shape = MaterialTheme.shapes.large,
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.errorContainer,
-                        contentColor = MaterialTheme.colorScheme.onErrorContainer
+                        containerColor =
+                            MaterialTheme.colorScheme.errorContainer,
+                        contentColor =
+                            MaterialTheme.colorScheme.onErrorContainer
                     )
                 ) {
                     Text("Delete solve")
@@ -239,21 +282,57 @@ fun SolveDetailsScreen(
                 horizontalAlignment = CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                CubePreview(
-                    scramble = scramble,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(190.dp)
-                )
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor =
+                            MaterialTheme.colorScheme.surfaceContainer
+                    ),
+                    border = BorderStroke(
+                        width = 1.dp,
+                        color = MaterialTheme.colorScheme.outlineVariant
+                    )
+                ) {
+                    CubePreview(
+                        scramble = scramble,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(190.dp)
+                    )
+                }
 
-                Text(
-                    text = currentSolve.scramble,
+                Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 12.dp),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                        .pointerInput(currentSolve.scramble) {
+                            detectTapGestures(
+                                onTap = {
+                                    copyScramble()
+                                }
+                            )
+                        },
+                    colors = CardDefaults.cardColors(
+                        containerColor =
+                            MaterialTheme.colorScheme.surfaceContainer
+                    ),
+                    border = BorderStroke(
+                        width = 1.dp,
+                        color = MaterialTheme.colorScheme.outlineVariant
+                    )
+                ) {
+                    Text(
+                        text = currentSolve.scramble,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(18.dp),
+                        style = MaterialTheme.typography.bodyLarge.copy(
+                            fontFamily = FontFamily.Monospace,
+                            fontSize = 20.sp,
+                            lineHeight = 30.sp
+                        ),
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+                }
             }
         }
     } else {
@@ -275,7 +354,9 @@ fun SolveDetailsScreen(
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 Text(
-                    text = TimeUtils.formatDateTime(currentSolve.createdAt),
+                    text = TimeUtils.formatDateTime(
+                        currentSolve.createdAt
+                    ),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -288,8 +369,11 @@ fun SolveDetailsScreen(
                     style = MaterialTheme.typography.displaySmall,
                     fontWeight = FontWeight.Bold,
                     color = when (currentSolve.penalty) {
-                        PENALTY_DNF -> MaterialTheme.colorScheme.error
-                        else -> MaterialTheme.colorScheme.onBackground
+                        PENALTY_DNF ->
+                            MaterialTheme.colorScheme.error
+
+                        else ->
+                            MaterialTheme.colorScheme.onBackground
                     }
                 )
             }
@@ -317,19 +401,57 @@ fun SolveDetailsScreen(
                 }
             }
 
-            CubePreview(
-                scramble = scramble,
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor =
+                        MaterialTheme.colorScheme.surfaceContainer
+                ),
+                border = BorderStroke(
+                    width = 1.dp,
+                    color = MaterialTheme.colorScheme.outlineVariant
+                )
+            ) {
+                CubePreview(
+                    scramble = scramble,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(240.dp)
+                )
+            }
+
+            Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(240.dp)
-            )
-
-            Text(
-                text = currentSolve.scramble,
-                modifier = Modifier.fillMaxWidth(),
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+                    .pointerInput(currentSolve.scramble) {
+                        detectTapGestures(
+                            onTap = {
+                                copyScramble()
+                            }
+                        )
+                    },
+                colors = CardDefaults.cardColors(
+                    containerColor =
+                        MaterialTheme.colorScheme.surfaceContainer
+                ),
+                border = BorderStroke(
+                    width = 1.dp,
+                    color = MaterialTheme.colorScheme.outlineVariant
+                )
+            ) {
+                Text(
+                    text = currentSolve.scramble,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(18.dp),
+                    style = MaterialTheme.typography.bodyLarge.copy(
+                        fontFamily = FontFamily.Monospace,
+                        fontSize = 20.sp,
+                        lineHeight = 30.sp
+                    ),
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+            }
 
             Column(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -343,7 +465,9 @@ fun SolveDetailsScreen(
 
                 OutlinedTextField(
                     value = comment,
-                    onValueChange = { comment = it },
+                    onValueChange = {
+                        comment = it
+                    },
                     modifier = Modifier.fillMaxWidth(),
                     shape = MaterialTheme.shapes.large,
                     singleLine = true,
@@ -368,8 +492,10 @@ fun SolveDetailsScreen(
                 modifier = Modifier.fillMaxWidth(),
                 shape = MaterialTheme.shapes.large,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.errorContainer,
-                    contentColor = MaterialTheme.colorScheme.onErrorContainer
+                    containerColor =
+                        MaterialTheme.colorScheme.errorContainer,
+                    contentColor =
+                        MaterialTheme.colorScheme.onErrorContainer
                 )
             ) {
                 Text("Delete solve")
