@@ -45,7 +45,7 @@ Swipe **up** to view your statistics and solve history. Swipe **down** to return
 - **`+2`** and **`DNF`** penalties
 - Comments for individual solves
 - Local-only storage
-- Incredible **landspace** UI
+- Incredible **landscape** UI
 - Material UI
 - Dynamic colors on Android 12+
 - Predictive back gesture support (Android 16+)
