@@ -18,20 +18,24 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
@@ -48,6 +52,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.jvqtil.cuber.CuberViewModel
 import dev.jvqtil.cuber.scramble.CubePreview
 import dev.jvqtil.cuber.util.TimeUtils
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+
+private const val RESET_DELAY_MS = 500L
 
 @Composable
 fun TimerScreen(
@@ -56,9 +65,69 @@ fun TimerScreen(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val haptic = LocalHapticFeedback.current
-    val isLandscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
+    val isLandscape =
+        LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
 
     val view = LocalView.current
+    val scope = rememberCoroutineScope()
+
+    var dragDistance by remember {
+        mutableFloatStateOf(0f)
+    }
+
+    var resetTriggered by remember {
+        mutableStateOf(false)
+    }
+
+    var resetPressed by remember {
+        mutableStateOf(false)
+    }
+
+    var resetJob by remember {
+        mutableStateOf<Job?>(null)
+    }
+
+    var mouseResetGesture by remember {
+        mutableStateOf(false)
+    }
+
+    fun cancelReset() {
+        resetJob?.cancel()
+        resetJob = null
+    }
+
+    fun beginResetHold() {
+        if (
+            state.running ||
+            !state.started ||
+            resetJob != null
+        ) {
+            return
+        }
+
+        resetTriggered = false
+        resetPressed = true
+        cancelReset()
+
+        resetJob = scope.launch {
+            delay(RESET_DELAY_MS)
+
+            if (resetPressed) {
+                resetTriggered = true
+                viewModel.reset()
+
+                haptic.performHapticFeedback(
+                    HapticFeedbackType.LongPress
+                )
+            }
+        }
+    }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            cancelReset()
+        }
+    }
 
     DisposableEffect(state.running, isLandscape) {
         val controller = WindowCompat.getInsetsController(
@@ -77,9 +146,14 @@ fun TimerScreen(
         onDispose { }
     }
 
-    var dragDistance by remember {
-        mutableFloatStateOf(0f)
-    }
+    val resetProgress by animateFloatAsState(
+        targetValue = if (resetPressed) 1f else 0f,
+        animationSpec = tween(
+            durationMillis = RESET_DELAY_MS.toInt(),
+            easing = FastOutSlowInEasing,
+        ),
+        label = "resetProgress",
+    )
 
     val controlsAlpha by animateFloatAsState(
         targetValue = if (state.running) 0f else 1f,
@@ -90,7 +164,7 @@ fun TimerScreen(
         label = "controlsAlpha"
     )
 
-    val controlsTranslation by animateFloatAsState(
+    val controlsTranslation by androidx.compose.animation.core.animateFloatAsState(
         targetValue = if (state.running) 18f else 0f,
         animationSpec = spring(
             dampingRatio = 0.9f,
@@ -106,30 +180,32 @@ fun TimerScreen(
             .pointerInput(state.started, state.running) {
                 detectTapGestures(
                     onPress = {
-                        if (state.running) {
-                            viewModel.setHolding(true)
+                        val canReset =
+                            state.started && !state.running
 
-                            try {
-                                awaitRelease()
-                            } finally {
-                                viewModel.setHolding(false)
-                            }
+                        mouseResetGesture = canReset
+
+                        if (canReset) {
+                            beginResetHold()
+                        }
+
+                        try {
+                            awaitRelease()
+                        } finally {
+                            cancelReset()
+                            resetPressed = false
                         }
                     },
                     onTap = {
-                        when {
-                            !state.started -> viewModel.start()
-                            state.running -> viewModel.stop()
+                        if (!mouseResetGesture) {
+                            when {
+                                !state.started -> viewModel.start()
+                                state.running -> viewModel.stop()
+                            }
                         }
-                    },
-                    onLongPress = {
-                        if (!state.running) {
-                            viewModel.reset()
 
-                            haptic.performHapticFeedback(
-                                HapticFeedbackType.LongPress
-                            )
-                        }
+                        mouseResetGesture = false
+                        resetTriggered = false
                     }
                 )
             }
@@ -188,26 +264,50 @@ fun TimerScreen(
                             .weight(1f)
                             .fillMaxHeight()
                     ) {
-                        Text(
-                            text = TimeUtils.format(state.elapsed),
+                        Column(
                             modifier = Modifier
                                 .align(Alignment.Center)
                                 .offset(x = timerOffset.dp),
-                            style = MaterialTheme.typography.displayLarge.copy(
-                                fontSize = 84.sp,
-                                fontWeight = FontWeight.Bold,
-                                letterSpacing = (-2.5).sp
-                            ),
-                            color = MaterialTheme.colorScheme.onBackground
-                        )
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .width(360.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = TimeUtils.format(state.elapsed),
+                                    modifier = Modifier.fillMaxWidth(),
+                                    style = MaterialTheme.typography.displayLarge.copy(
+                                        fontSize = 84.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        letterSpacing = (-2.5).sp
+                                    ),
+                                    textAlign = TextAlign.Center,
+                                    color = MaterialTheme.colorScheme.onBackground
+                                )
+                            }
+
+                            Box(
+                                modifier = Modifier
+                                    .width(190.dp)
+                                    .height(7.dp)
+                            ) {
+                                ResetProgress(
+                                    progress = resetProgress,
+                                    visible = resetPressed
+                                )
+                            }
+                        }
                     }
 
                     Box(
                         modifier = Modifier
                             .weight(1f)
                             .fillMaxHeight()
-                            .alpha(controlsAlpha)
                             .graphicsLayer {
+                                alpha = controlsAlpha
                                 translationY = controlsTranslation
                             }
                     ) {
@@ -236,16 +336,40 @@ fun TimerScreen(
                 }
             }
         } else {
-            Text(
-                text = TimeUtils.format(state.elapsed),
+            Column(
                 modifier = Modifier.align(Alignment.Center),
-                style = MaterialTheme.typography.displayLarge.copy(
-                    fontSize = 84.sp,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = (-2.5).sp
-                ),
-                color = MaterialTheme.colorScheme.onBackground
-            )
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .width(360.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = TimeUtils.format(state.elapsed),
+                        modifier = Modifier.fillMaxWidth(),
+                        style = MaterialTheme.typography.displayLarge.copy(
+                            fontSize = 84.sp,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = (-2.5).sp
+                        ),
+                        textAlign = TextAlign.Center,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+                }
+
+                Box(
+                    modifier = Modifier
+                        .width(190.dp)
+                        .height(7.dp)
+                ) {
+                    ResetProgress(
+                        progress = resetProgress,
+                        visible = resetPressed
+                    )
+                }
+            }
 
             Column(
                 modifier = Modifier
@@ -257,8 +381,8 @@ fun TimerScreen(
                         end = 20.dp,
                         bottom = 24.dp
                     )
-                    .alpha(controlsAlpha)
                     .graphicsLayer {
+                        alpha = controlsAlpha
                         translationY = controlsTranslation
                     },
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -278,5 +402,38 @@ fun TimerScreen(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun ResetProgress(
+    progress: Float,
+    visible: Boolean,
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .graphicsLayer {
+                alpha = if (visible) 1f else 0f
+            }
+            .background(
+                MaterialTheme.colorScheme.surfaceContainerHigh,
+                RoundedCornerShape(50),
+            ),
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth(
+                    progress.coerceIn(
+                        0f,
+                        1f,
+                    ),
+                )
+                .fillMaxHeight()
+                .background(
+                    MaterialTheme.colorScheme.primary,
+                    RoundedCornerShape(50),
+                ),
+        )
     }
 }
