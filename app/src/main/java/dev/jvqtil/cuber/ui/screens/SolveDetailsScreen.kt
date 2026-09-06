@@ -280,10 +280,12 @@ fun SolveDetailsScreen(
                     .weight(1f)
                     .fillMaxHeight(),
                 horizontalAlignment = CenterHorizontally,
-                verticalArrangement = Arrangement.Center
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Card(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
                     colors = CardDefaults.cardColors(
                         containerColor =
                             MaterialTheme.colorScheme.surfaceContainer
@@ -297,7 +299,7 @@ fun SolveDetailsScreen(
                         scramble = scramble,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(190.dp)
+                            .height(250.dp)
                     )
                 }
 
