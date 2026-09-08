@@ -22,9 +22,17 @@ Cubing app for Android. Timer, scrambles, stats
 
 <table>
   <tr>
-    <td><img src="assets/screenshots/cuber_timer_screen.png" width="200" alt="Timer"></td>
-    <td><img src="assets/screenshots/cuber_solves_screen.png" width="200" alt="Statistics and solve history"></td>
-    <td><img src="assets/screenshots/cuber_solve_details_screen.png" width="200" alt="Solve details"></td>
+    <td><img src="assets/screenshots/cuber_timer_screen.png" width="150" alt="Timer"></td>
+    <td><img src="assets/screenshots/cuber_solves_screen.png" width="150" alt="Statistics and solve history"></td>
+    <td><img src="assets/screenshots/cuber_solve_details_screen.png" width="150" alt="Solve details"></td>
+  </tr>
+</table>
+
+<table>
+  <tr>
+    <td><img src="assets/screenshots/cuber_landscape_timer_screen.png" height="300" alt="Timer"></td>
+    <td><img src="assets/screenshots/cuber_landscape_solves_screen.png" height="300" alt="Statistics and solve history"></td>
+    <td><img src="assets/screenshots/cuber_landscape_solve_details_screen.png" height="300" alt="Solve details"></td>
   </tr>
 </table>
 
