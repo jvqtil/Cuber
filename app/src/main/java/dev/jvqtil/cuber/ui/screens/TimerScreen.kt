@@ -2,6 +2,7 @@ package dev.jvqtil.cuber.ui.screens
 
 import android.app.Activity
 import android.content.res.Configuration
+import android.view.WindowManager
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
@@ -55,6 +56,7 @@ import dev.jvqtil.cuber.util.TimeUtils
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
 
 private const val RESET_DELAY_MS = 500L
 
@@ -110,7 +112,7 @@ fun TimerScreen(
         cancelReset()
 
         resetJob = scope.launch {
-            delay(RESET_DELAY_MS)
+            delay(RESET_DELAY_MS.milliseconds)
 
             if (resetPressed) {
                 resetTriggered = true
@@ -130,6 +132,8 @@ fun TimerScreen(
     }
 
     DisposableEffect(state.running, isLandscape) {
+        val window = (view.context as Activity).window
+
         val controller = WindowCompat.getInsetsController(
             (view.context as Activity).window,
             view
@@ -143,7 +147,15 @@ fun TimerScreen(
             controller.show(WindowInsetsCompat.Type.systemBars())
         }
 
-        onDispose { }
+        if (state.running) {
+            window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        } else {
+            window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        }
+
+        onDispose {
+            window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        }
     }
 
     val resetProgress by animateFloatAsState(
@@ -164,7 +176,7 @@ fun TimerScreen(
         label = "controlsAlpha"
     )
 
-    val controlsTranslation by androidx.compose.animation.core.animateFloatAsState(
+    val controlsTranslation by animateFloatAsState(
         targetValue = if (state.running) 18f else 0f,
         animationSpec = spring(
             dampingRatio = 0.9f,
